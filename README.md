@@ -16,8 +16,7 @@ unityagents==0.4.0
 - `src` contains the implementation of the models
 
 ### Relevant Files
-- `PPO_Continous_learning.ipynb` Is the notebook used to train the PPO model.
-- `DDPG_Continous_learning.ipynb` Is the notebook used to train the DDPG model.
+- `DDPG_Tennis.ipynb` Is the notebook used to train the DDPG model.
 - `pretrained_demo.ipynb` Is the notebook used to load the pretrained models.
 
 ## Section 2: Download the Unity Environment

@@ -9,7 +9,7 @@ from tqdm import tqdm
 from unityagents import UnityEnvironment
 
 from .buffer_replay import PrioritizedReplayBuffer
-from .network import MADDPGPolicy
+from .network import DDPGPolicy
 
 DEFAULT_HIDDEN_SIZES = [256, 256]
 DEFAULT_ACTION_SCALE = 1.
@@ -30,8 +30,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class MADDPGAgent:
-    def __init__(self, env: UnityEnvironment, n_agents: int = 2,
-                 network_config: Optional[Dict] = None, seed = None):
+    def __init__(self, env: UnityEnvironment, network_config: Optional[Dict]=None, seed=None):
 
 
         self.env = env
@@ -39,7 +38,7 @@ class MADDPGAgent:
         self.__brain = env.brains[self.__brain_name]
         env_info = self.env.reset(train_mode=True)[self.__brain_name]
 
-        self.n_agents = len(env_info.agents)
+        self.n_threads = len(env_info.agents)
         self.state_size = env_info.vector_observations.shape[1]
         self.action_size = self.__brain.vector_action_space_size
         # self.action_std_min = action_std_min
@@ -51,7 +50,7 @@ class MADDPGAgent:
         network_config.setdefault('critic_hidden_sizes', DEFAULT_HIDDEN_SIZES)
         network_config.setdefault('seed', self.seed)
 
-        self.policy = MADDPGPolicy(self.state_size, self.action_size, n_agents=2, **network_config).to(device)
+        self.policy = DDPGPolicy(self.state_size, self.action_size, **network_config).to(device)
 
         self.noise = OUNoise(self.action_size, seed=seed)
 
@@ -116,7 +115,7 @@ class MADDPGAgent:
         env_info = self.env.reset(train_mode=False)[self.__brain_name]
 
         state = torch.from_numpy(env_info.vector_observations).float().to(device)
-        episode_reward = np.zeros((1, self.n_agents))
+        episode_reward = np.zeros((1, self.n_threads))
         if track_progress:
             pbar = tqdm(range(max_steps))
         else:
@@ -168,5 +167,5 @@ if __name__ == '__main__':
         file_name='/Users/claudcop/code/deep-rl/DeepRL_Continuous_Control/unity/Reacher20.app',
         no_graphics=False)
 
-    agent = DDPGAgent(env)
+    agent = MADDPGAgent(env)
     agent.run_test_episode(max_steps=1000, track_progress=True)

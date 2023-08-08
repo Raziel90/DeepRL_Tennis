@@ -5,6 +5,7 @@ import torch
 from torch import nn
 
 
+
 class Actor(nn.Module):
     def __init__(self, state_dim: int, action_dim: int,
                  hidden_sizes: List[int], action_limit: float=1.,
@@ -186,17 +187,15 @@ class Critic(nn.Module):
         for this_param, other_param in zip(self.parameters(), other.parameters()):
             this_param.data.copy_(tau * this_param.data + (1.0 - tau) * other_param.data)
 
-
-class MADDPGPolicy(nn.Module):
+class DDPGPolicy(nn.Module):
     def __init__(self, state_dim: int, action_dim: int,
                  actor_hidden_sizes: List[int], critic_hidden_sizes: List[int],
-                 n_agents: int = 2,
                  action_limit: float = 1.,
                  hidden_actor_activation: Type[nn.Module] = nn.ReLU,
                  output_actor_activation: Type[nn.Module] = nn.Tanh,
                  hidden_critic_activation: Type[nn.Module] = nn.LeakyReLU,
                  seed=None) -> None:
-        super(MADDPGPolicy, self).__init__()
+        super(DDPGPolicy, self).__init__()
 
         torch.manual_seed(seed) if seed is not None else seed
         self.seed = seed
@@ -206,11 +205,10 @@ class MADDPGPolicy(nn.Module):
         self.action_limit = action_limit
         self.actor_hidden_sizes = actor_hidden_sizes
         self.critic_hidden_sizes = critic_hidden_sizes
-        self.n_agents = n_agents
 
         self.pi = Actor(state_dim, action_dim, actor_hidden_sizes, action_limit,
                         hidden_actor_activation, output_actor_activation, seed)
-        self.V = Critic(self.n_agents * state_dim, self.n_agents * action_dim, critic_hidden_sizes, hidden_critic_activation, seed)
+        self.V = Critic(state_dim, action_dim, critic_hidden_sizes, hidden_critic_activation, seed)
     @property
     def network_dim(self):
         return self.pi.network_dim, self.V.network_dim
@@ -249,7 +247,6 @@ class MADDPGPolicy(nn.Module):
             'V': self.V.get_state(),
             'state_dim': self.state_dim,
             'action_dim': self.action_dim,
-            'n_agents': self.n_agents,
             'seed': self.seed
             }
         return state
@@ -259,7 +256,6 @@ class MADDPGPolicy(nn.Module):
         self.V.set_state(state['V'])
         self.state_dim = state['state_dim']
         self.action_dim = state['action_dim']
-        self.n_agents = state['n_agents']
 
     def soft_update(self, other, tau):
         """Soft update model parameters.
@@ -273,14 +269,13 @@ class MADDPGPolicy(nn.Module):
         self.pi.soft_update(other.pi, tau)
         self.V.soft_update(other.V, tau)
 
-
 if __name__ == '__main__':
-    policy = MADDPGPolicy(4, 5, [128, 512], [128, 512])
+    policy = DDPGPolicy(4, 5, [128, 512], [128, 512])
     print(policy.pi.layers)
     print(policy.V.layers)
-    policy.to_file('testMADDPGPolicy.pth')
+    policy.to_file('testDDPGPolicy.pth')
 
-    policy2 = MADDPGPolicy.from_file('testMADDPGPolicy.pth')
+    policy2 = DDPGPolicy.from_file('testDDPGPolicy.pth')
     print(policy2.pi.layers)
     print(policy2.V.layers)
     print(policy2.pi.network_dim)

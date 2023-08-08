@@ -8,7 +8,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from tqdm import tqdm
 
-from .agent import MADDPGAgent
+from .agent import DDPGAgent
 from .buffer_replay import PrioritizedReplayBuffer, ReplayBuffer
 from .network import DDPGPolicy
 
@@ -21,11 +21,12 @@ WEIGHT_DECAY = 2e-6   # L2 weight decay
 
 LOGGER = logging.getLogger(__name__)
 
-class MADDPGTrainer:
-    def __init__(self, agent: MADDPGAgent, learning_rate_actor: float = 1e-3, learning_rate_critic: float = 1e-3,
+
+class DDPGTrainer:
+    def __init__(self, agent: DDPGAgent, learning_rate_actor: float = 1e-3, learning_rate_critic: float = 1e-3,
                  gamma: float = 0.99, tau: float = 1e-3, replaybuffer_type="base", filename='DDPG.pth', filepath='./'):
         self.target_agent = agent
-        self.local_agent = MADDPGAgent.clone_agent(self.target_agent)
+        self.local_agent = DDPGAgent.clone_agent(self.target_agent)
         self.__brain_name = self.local_agent.env.brain_names[0]
         self.__brain = self.local_agent.env.brains[self.__brain_name]
 
@@ -48,7 +49,7 @@ class MADDPGTrainer:
         self.scores = []
         self.scores_deque = deque(maxlen=100)
 
-    def train(self, n_episodes: int, max_steps_per_episode: int, target: float = 30.) -> MADDPGAgent:
+    def train(self, n_episodes: int, max_steps_per_episode: int, target: float = 30.) -> DDPGAgent:
 
         LOGGER.info('\t' + '-' * 30 + ' Training ' + '-' * 30)
         LOGGER.info(f'\tN Episodes {n_episodes} , max length episode: {max_steps_per_episode}')

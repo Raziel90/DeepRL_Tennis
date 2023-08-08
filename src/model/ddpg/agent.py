@@ -29,7 +29,7 @@ TDDPGAgent = TypeVar("TDDPGAgent", bound="DDPGAgent")
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-class MADDPGAgent:
+class DDPGAgent:
     def __init__(self, env: UnityEnvironment, network_config: Optional[Dict]=None, seed=None):
 
 
